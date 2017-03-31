@@ -13,4 +13,8 @@ To test a pretrained model run:
 
 `python test.py [environement] [params_filename]`
 
+To visualize the training curves:
+
+`python plot_results.py [results_path]`
+
 **Warning**: By default it takes around 8GB of memory to run, you can change this by reducing the replay memory size with the --mem_size option.
