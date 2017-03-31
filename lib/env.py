@@ -1,5 +1,5 @@
 import numpy as np
-from lib.memory import Memory
+from memory import Memory
 from tqdm import tqdm
 
 class EnvWrapper(object):
@@ -58,6 +58,8 @@ class EnvWrapper(object):
                 elif mode == 'render':
                     self.env.render()
                     action = self.agent.get_action(state, eps=0.05)
+                elif mode == 'baseline':
+                    action = self.agent.get_action(state, eps=1.)
                 else:
                     raise ValueError('Wrong mode, choose between init|train|test')
 
@@ -100,6 +102,6 @@ class EnvWrapper(object):
 
         if mode == 'train':
             return num_episodes, np.mean(loss_per_episode), self.epsilon
-        elif mode == 'test':
+        elif mode == 'test' or mode == 'baseline' or mode == 'render':
             return (num_episodes, np.mean(steps_per_episode), np.max(steps_per_episode),
                     np.sum(reward_per_episode), np.mean(reward_per_episode), np.max(reward_per_episode))

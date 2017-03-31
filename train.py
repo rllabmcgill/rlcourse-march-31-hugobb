@@ -106,6 +106,10 @@ if __name__ == '__main__':
     learning_file.write('epoch,num_episodes,mean_loss,epsilon\n')
     learning_file.flush()
 
+    results = env_wrapper.run_epoch(test_epoch_length, mode='baseline')
+    print results
+    print "baseline: num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %d, max_reward: %d"%(results)
+
     env_wrapper.run_epoch(replay_start_size, mode='init')
     for epoch in range(n_epochs):
         num_episodes, mean_loss, epsilon = env_wrapper.run_epoch(train_epoch_length, mode='train')

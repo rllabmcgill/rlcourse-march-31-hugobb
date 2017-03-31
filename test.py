@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     env_id = args.env
     params = args.params
-    test_epoch_length = 1e7
+    test_epoch_length = 125000
 
     agent = DeepQAgent(build_network)
     env = gym.make(env_id+'Deterministic-v3')
