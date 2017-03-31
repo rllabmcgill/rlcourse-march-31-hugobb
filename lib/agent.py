@@ -79,7 +79,7 @@ class DeepQAgent(object):
 
         train_givens = {
             state: self.seq_shared[:, :-1],
-            next_state: self.next_seq_shared[:, 1:],
+            next_state: self.seq_shared[:, 1:],
             reward: self.reward_shared,
             action: self.action_shared,
             done: self.done_shared
