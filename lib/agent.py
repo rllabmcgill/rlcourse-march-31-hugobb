@@ -34,9 +34,6 @@ class DeepQAgent(object):
         self.seq_shared = theano.shared(
             np.zeros((batch_size, seq_length) + state_space,
                      dtype=theano.config.floatX))
-        self.next_seq_shared = theano.shared(
-            np.zeros((batch_size, seq_length) + state_space,
-                     dtype=theano.config.floatX))
         self.reward_shared = theano.shared(
             np.zeros((batch_size, 1), dtype=theano.config.floatX),
             broadcastable=(False, True))
@@ -56,7 +53,7 @@ class DeepQAgent(object):
         if self.update_frequency > 0:
             next_q_vals = lasagne.layers.get_output(self.next_l_out, inputs=next_state/self.norm)
         else:
-            next_q_vals = lasagne.layers.get_output(self.l_out, inputs=next_states/self.norm)
+            next_q_vals = lasagne.layers.get_output(self.l_out, inputs=next_state/self.norm)
             next_q_vals = theano.gradient.disconnected_grad(next_q_vals)
 
         doneX = done.astype(theano.config.floatX)
@@ -81,8 +78,8 @@ class DeepQAgent(object):
         updates = self.optimizer(loss, params)
 
         train_givens = {
-            state: self.seq_shared,
-            next_state: self.next_seq_shared,
+            state: self.seq_shared[:, :-1],
+            next_state: self.next_seq_shared[:, 1:],
             reward: self.reward_shared,
             action: self.action_shared,
             done: self.done_shared
@@ -112,9 +109,8 @@ class DeepQAgent(object):
         lasagne.layers.set_all_param_values(self.l_out, all_params)
         lasagne.layers.set_all_param_values(self.next_l_out, all_params)
 
-    def train(self, state, next_state, action, reward, done):
+    def train(self, state, action, reward, done):
         self.seq_shared.set_value(state)
-        self.next_seq_shared.set_value(next_state)
         self.action_shared.set_value(action)
         self.reward_shared.set_value(reward)
         self.done_shared.set_value(done)

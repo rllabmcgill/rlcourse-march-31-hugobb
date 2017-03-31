@@ -71,14 +71,15 @@ class EnvWrapper(object):
             num_steps += 1
 
             if mode == 'train' and num_steps % self.update_frequency == 0:
-                s, next_s, a, r, d = self.replay_memory.sample(self.seq_length, self.batch_size)
-                loss.append(self.agent.train(s, next_s, a, r, d))
+                s, a, r, d = self.replay_memory.sample(self.seq_length, self.batch_size)
+                loss.append(self.agent.train(s, a, r, d))
                 self.update_counter += 1
                 if (self.agent.update_frequency > 0 and
                     self.update_counter % self.agent.update_frequency == 0):
                     self.agent.update_q_hat()
 
             if done or num_steps >= max_steps:
+                self.replay_memory.append(_frame, None, None, None)
                 break
 
         return episode_reward, num_steps, loss

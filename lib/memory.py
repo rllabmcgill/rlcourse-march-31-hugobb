@@ -33,8 +33,7 @@ class Memory(object):
         return self.state.take(index,axis=0, mode='wrap')
 
     def sample(self, seq_length, batch_size=128):
-        state = np.zeros((batch_size, seq_length) + self.state.shape[1:], dtype='uint8')
-        next_state = np.zeros((batch_size, seq_length) + self.state.shape[1:], dtype='uint8')
+        state = np.zeros((batch_size, seq_length+1) + self.state.shape[1:], dtype='uint8')
         action = np.zeros((batch_size,1), dtype='uint8')
         reward = np.zeros((batch_size,1), dtype='uint8')
         done = np.zeros((batch_size,1), dtype=bool)
@@ -47,16 +46,10 @@ class Memory(object):
             if np.any(self.done.take(all_indices[0:-2], mode='wrap')):
                 continue
 
-            elif self.done.take(all_indices[-2], mode='wrap'):
-                next_state[count] = self.state.take(all_indices[:-1]+seq_length, axis=0, mode='wrap')
-
-            else:
-                next_state[count] = self.state.take(all_indices[1:], axis=0, mode='wrap')
-
-            state[count] = self.state.take(all_indices[:-1], axis=0, mode='wrap')
+            state[count] = self.state.take(all_indices, axis=0, mode='wrap')
             action[count] = self.action.take(end_index, mode='wrap')
             reward[count] = self.reward.take(end_index, mode='wrap')
             done[count] = self.done.take(end_index, mode='wrap')
             count += 1
 
-        return state, next_state, action, reward, done
+        return state, action, reward, done
