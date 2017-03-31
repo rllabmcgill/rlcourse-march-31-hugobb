@@ -79,7 +79,7 @@ class EnvWrapper(object):
                     self.agent.update_q_hat()
 
             if done or num_steps >= max_steps:
-                self.replay_memory.append(_frame, None, None, None)
+                self.replay_memory.append(_frame, self.num_actions+1, 0, False)
                 break
 
         return episode_reward, num_steps, loss
