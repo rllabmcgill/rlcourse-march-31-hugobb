@@ -86,14 +86,13 @@ class DeepQAgent(object):
             done: self.done_shared
         }
 
+        print "Compiling..."
+        t = time()
+        self._train = theano.function([], [loss], updates=updates, givens=train_givens)
 
         q_givens = {
             state: self.state_shared.reshape((1, seq_length)+state_space)
         }
-
-        print "Compiling..."
-        t = time()
-        self._train = theano.function([], [loss], updates=updates, givens=train_givens)
         self._q_vals = theano.function([], q_vals[0], givens=q_givens)
         print '%.2f to compile.'%(time()-t)
 
@@ -117,7 +116,7 @@ class DeepQAgent(object):
         self.done_shared.set_value(done)
         if (self.update_frequency > 0 and
             self.update_counter % self.update_frequency == 0):
-            self.reset_q_hat()
+            self.update_q_hat()
         loss = self._train()
         self.update_counter += 1
 

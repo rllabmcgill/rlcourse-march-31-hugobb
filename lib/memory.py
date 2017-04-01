@@ -28,9 +28,13 @@ class Memory(object):
             self.size += 1
         self.top = (self.top + 1) % self.max_length
 
-    def get_state(self, seq_length):
-        index = np.arange(self.top - seq_length + 1, self.top+1)
-        return self.state.take(index,axis=0, mode='wrap')
+    def get_state(self, observation, seq_length):
+        index = np.arange(self.top - seq_length + 1, self.top)
+
+        state = np.empty((seq_length,)+self.state.shape[1:], dtype='uint8')
+        state[0:seq_length - 1] = self.state.take(index, axis=0, mode='wrap')
+        state[-1] = observation
+        return state
 
     def sample(self, seq_length, batch_size=128):
         state = np.zeros((batch_size, seq_length+1) + self.state.shape[1:], dtype='uint8')

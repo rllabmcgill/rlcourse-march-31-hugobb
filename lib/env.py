@@ -13,6 +13,7 @@ class EnvWrapper(object):
         self.max_no_op = max_no_op
         self.preprocess = preprocess
         self.replay_memory = Memory(state_space, memory_size)
+        self.test_memory = Memory(state_space, seq_length * 2)
         self.epsilon_start = init_epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
@@ -28,53 +29,75 @@ class EnvWrapper(object):
         agent.init(self.num_actions, self.seq_length, self.state_space, self.batch_size)
 
     def run_episode(self, max_steps, mode='train'):
-        loss = []
         frame = self.env.reset()
-        episode_reward = 0
-        _frame = self.preprocess(frame)
-        random_actions = np.random.randint(0, self.max_no_op+1)
-        action = 0
-        for i in range(random_actions):
-            next_frame, reward, done, info = self.env.step(action)
-            _frame = self.preprocess(frame, next_frame)
-            frame = next_frame
-            episode_reward += reward
+        if self.max_no_op > 0:
+            random_actions = np.random.randint(self.max_no_op+1)
+            for i in range(random_actions):
+                frame, reward, done, info = self.env.step(0)
 
+        loss = []
+        episode_reward = 0
         num_steps = 0
+        action = np.random.randint(self.num_actions)
+        last_frame = self.preprocess(frame)
+        last_action = action
         while True:
-            if num_steps < self.seq_length:
-                action = np.random.randint(self.num_actions)
-            else:
-                state = self.replay_memory.get_state(self.seq_length)
-                if mode == 'test':
+            frame, reward, done, info = self.env.step(action)
+            num_steps += 1
+            episode_reward += reward
+            if done or num_steps >= max_steps:
+                break
+
+            observation = self.preprocess(frame)
+            if mode == 'test':
+                self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                if num_steps >= self.seq_length:
+                    state = self.test_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=0.05)
-                elif mode == 'init':
-                    action = self.agent.get_action(state, eps=1.)
-                elif mode == 'train':
+                else:
+                    action = np.random.randint(self.num_actions)
+            elif mode == 'init':
+                self.replay_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                if num_steps >= self.seq_length:
+                    state = self.replay_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=self.epsilon)
-                    self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_rate)
-                elif mode == 'render':
-                    self.env.render()
+                else:
+                    action = np.random.randint(self.num_actions)
+
+            elif mode == 'train':
+                self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_rate)
+                self.replay_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                if num_steps >= self.seq_length:
+                    state = self.replay_memory.get_state(observation, self.seq_length)
+                    action = self.agent.get_action(state, eps=self.epsilon)
+                else:
+                    action = np.random.randint(self.num_actions)
+
+                if num_steps % self.update_frequency == 0:
+                    s, a, r, d = self.replay_memory.sample(self.seq_length, self.batch_size)
+                    loss.append(self.agent.train(s, a, r, d))
+
+            elif mode == 'render':
+                self.env.render()
+                self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                if num_steps >= self.seq_length:
+                    state = self.test_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=0.05)
-                elif mode == 'baseline':
+                else:
+                    action = np.random.randint(self.num_actions)
+
+            elif mode == 'baseline':
+                self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                if num_steps >= self.seq_length:
+                    state = self.test_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=1.)
                 else:
-                    raise ValueError('Wrong mode, choose between init|train|test')
+                    action = np.random.randint(self.num_actions)
+            else:
+                raise ValueError('Wrong mode, choose between init|train|test')
 
-            next_frame, reward, done, info = self.env.step(action)
-            self.replay_memory.append(_frame, action, np.clip(reward,-1,1), done)
-            _frame = self.preprocess(frame, next_frame)
-            frame = next_frame
-            episode_reward += reward
-            num_steps += 1
-
-            if mode == 'train' and num_steps % self.update_frequency == 0:
-                s, a, r, d = self.replay_memory.sample(self.seq_length, self.batch_size)
-                loss.append(self.agent.train(s, a, r, d))
-
-            if done or num_steps >= max_steps:
-                self.replay_memory.append(_frame, self.num_actions+1, 0, False)
-                break
+            last_frame = observation
+            last_action = action
 
         return episode_reward, num_steps, loss
 
