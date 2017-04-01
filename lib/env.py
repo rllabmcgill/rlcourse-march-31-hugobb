@@ -46,6 +46,8 @@ class EnvWrapper(object):
             num_steps += 1
             episode_reward += reward
             if done or num_steps >= max_steps:
+                if mode == 'init' or mode == 'train':
+                    self.replay_memory.append(last_frame, last_action, np.clip(reward,-1,1), True)
                 break
 
             observation = self.preprocess(frame)
