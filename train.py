@@ -107,7 +107,7 @@ if __name__ == '__main__':
     learning_file.flush()
 
     results = env_wrapper.run_epoch(test_epoch_length, mode='baseline')
-    print "baseline: num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %d, max_reward: %d"%(results)
+    print "baseline: num episodes: %d, mean length: %d, max length: %d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(results)
 
     env_wrapper.run_epoch(replay_start_size, mode='init')
     for epoch in range(n_epochs):
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                 epoch,num_episodes,mean_loss,epsilon)
 
         results = env_wrapper.run_epoch(test_epoch_length, mode='test')
-        print "epoch: %d, num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %4.f, max_reward: %d"%(
+        print "epoch: %d, num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(
                 (epoch,)+results)
 
         out = "{},{},{},{},{},{},{}\n".format(epoch, results[0], results[1], results[2], results[3], results[4], results[5])

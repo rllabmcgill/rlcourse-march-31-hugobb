@@ -16,6 +16,7 @@ class DeepQAgent(object):
         self.clip_delta = clip_delta
         self.build_network = build_network
         self.optimizer = optimizer
+        self.update_counter = 0
 
     def init(self, num_actions, seq_length, state_space, batch_size):
         self.l_out = self.build_network(num_actions, shape=(None, seq_length)+state_space)
@@ -114,7 +115,12 @@ class DeepQAgent(object):
         self.action_shared.set_value(action)
         self.reward_shared.set_value(reward)
         self.done_shared.set_value(done)
+        if (self.update_frequency > 0 and
+            self.update_counter % self.update_frequency == 0):
+            self.reset_q_hat()
         loss = self._train()
+        self.update_counter += 1
+
         return np.sqrt(loss)
 
     def q_vals(self, state):

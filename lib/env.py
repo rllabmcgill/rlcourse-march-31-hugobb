@@ -27,8 +27,6 @@ class EnvWrapper(object):
         self.agent = agent
         agent.init(self.num_actions, self.seq_length, self.state_space, self.batch_size)
 
-        self.update_counter = 0
-
     def run_episode(self, max_steps, mode='train'):
         loss = []
         frame = self.env.reset()
@@ -73,10 +71,6 @@ class EnvWrapper(object):
             if mode == 'train' and num_steps % self.update_frequency == 0:
                 s, a, r, d = self.replay_memory.sample(self.seq_length, self.batch_size)
                 loss.append(self.agent.train(s, a, r, d))
-                self.update_counter += 1
-                if (self.agent.update_frequency > 0 and
-                    self.update_counter % self.agent.update_frequency == 0):
-                    self.agent.update_q_hat()
 
             if done or num_steps >= max_steps:
                 self.replay_memory.append(_frame, self.num_actions+1, 0, False)
