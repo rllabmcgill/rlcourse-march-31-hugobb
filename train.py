@@ -100,7 +100,7 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(path,'params')):
         os.makedirs(path)
 
-    results_file = open(os.path.join(path, '/results.csv', 'w', 0)):
+    results_file = open(os.path.join(path, '/results.csv', 'w', 0))
     results_file.write(\
         'epoch,num_episodes,mean_length,max_length,total_reward,max_reward,mean_reward\n')
     results_file.flush()
