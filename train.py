@@ -84,7 +84,7 @@ if __name__ == '__main__':
     env_id = args.env
     path = args.output
     memory_size = args.mem_size
-    
+
     replay_start_size = 50000
     train_epoch_length = 250000
     test_epoch_length = 125000
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     if not os.path.exists(path):
         os.makedirs(path)
     if not os.path.exists(os.path.join(path,'params')):
-        os.makedirs(path)
+        os.makedirs(os.path.join(path,'params'))
 
     results_file = open(os.path.join(path, '/results.csv', 'w', 0))
     results_file.write(\
