@@ -84,8 +84,7 @@ if __name__ == '__main__':
     env_id = args.env
     path = args.output
     memory_size = args.mem_size
-    filename = args.resume
-
+    
     replay_start_size = 50000
     train_epoch_length = 250000
     test_epoch_length = 125000
