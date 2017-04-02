@@ -5,6 +5,8 @@ import numpy as np
 from scipy.misc import imresize
 import os
 import argparse
+import logging
+from gym import wrappers
 
 RGB2Y = np.array([0.2126, 0.7152, 0.0722])
 
@@ -78,16 +80,27 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('env', help='The atari environement on which to train the model.', type=str)
     parser.add_argument('params', help='The path to the filename with the parameters of the model.', type=str)
+    parser.add_argument('-s', '--save', help='Path where to save the results.', default=None, type=str)
+    parser.add_argument('--render', help='If flags is on, render live.', action='store_true')
     args = parser.parse_args()
+
+    logger = logging.getLogger('gym')
+    logger.setLevel(logging.WARNING)
 
     env_id = args.env
     params = args.params
+    path = args.save
+    mode = 'test'
+    if args.render:
+        mode = 'render'
     test_epoch_length = 125000
 
     agent = DeepQAgent(build_network)
     env = gym.make(env_id+'Deterministic-v3')
+    if not path is None:
+        env = wrappers.Monitor(env, path, force=True)
     env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=12)
     env_wrapper.agent.load(params)
 
-    results = env_wrapper.run_epoch(test_epoch_length, mode='test')
+    results = env_wrapper.run_epoch(test_epoch_length, mode=mode)
     print "num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %d, max_reward: %d"%(results)

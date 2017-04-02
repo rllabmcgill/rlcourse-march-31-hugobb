@@ -78,12 +78,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('env', help='The atari environement on which to train the model.', type=str)
     parser.add_argument('output', help='The path of the directory where to save results.', type=str)
-    parser.add_argument('--mem_size', help='The size of the replay memory', default=int(1e6), type=int)
+    parser.add_argument('--mem_size', help='The size of the replay memory.', default=int(1e6), type=int)
     args = parser.parse_args()
 
     env_id = args.env
     path = args.output
     memory_size = args.mem_size
+    filename = args.resume
 
     replay_start_size = 50000
     train_epoch_length = 250000
@@ -96,8 +97,10 @@ if __name__ == '__main__':
 
     if not os.path.exists(path):
         os.makedirs(path)
+    if not os.path.exists(os.path.join(path,'params')):
+        os.makedirs(path)
 
-    results_file = open(path + '/results.csv', 'w', 0)
+    results_file = open(os.path.join(path, '/results.csv', 'w', 0)):
     results_file.write(\
         'epoch,num_episodes,mean_length,max_length,total_reward,max_reward,mean_reward\n')
     results_file.flush()
@@ -127,4 +130,4 @@ if __name__ == '__main__':
         learning_file.write(out)
         learning_file.flush()
 
-        env_wrapper.agent.save(path + 'params_%d'%(epoch))
+        env_wrapper.agent.save(os.path.join(path,'params/epoch_%d'%(epoch)))

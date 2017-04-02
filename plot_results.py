@@ -1,5 +1,6 @@
 import numpy as np
 import argparse
+import os
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
@@ -10,13 +11,13 @@ if __name__ == '__main__':
 
     path = args.results
 
-    mean_loss = np.loadtxt(path+'learning.csv', delimiter=',', skiprows=1, usecols=2)
-    results = np.loadtxt(path+'results.csv', delimiter=',', skiprows=1, usecols=(2,5))
+    mean_loss = np.loadtxt(os.path.join(path,'learning.csv'), delimiter=',', skiprows=1, usecols=2)
+    results = np.loadtxt(os.path.join(path,'results.csv'), delimiter=',', skiprows=1, usecols=(2,5))
 
     plt.figure(1)
     plt.plot(mean_loss)
     plt.title('MSE')
-    plt.savefig(path+'mean_loss.png')
+    plt.savefig(os.path.join(path,'mean_loss.png'))
 
     plt.figure(2)
     plt.subplot(211)
@@ -26,4 +27,4 @@ if __name__ == '__main__':
     plt.plot(results[:,1])
     plt.title('Average score per episode')
     plt.tight_layout()
-    plt.savefig(path+'results.png')
+    plt.savefig(os.path.join(path,'results.png'))
