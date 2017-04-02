@@ -99,12 +99,12 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(path,'params')):
         os.makedirs(os.path.join(path,'params'))
 
-    results_file = open(os.path.join(path, '/results.csv', 'w', 0))
+    results_file = open(os.path.join(path, '/results.csv'), 'w')
     results_file.write(\
         'epoch,num_episodes,mean_length,max_length,total_reward,max_reward,mean_reward\n')
     results_file.flush()
 
-    learning_file = open(path + '/learning.csv', 'w', 0)
+    learning_file = open(os.path.join(path, '/learning.csv'), 'w')
     learning_file.write('epoch,num_episodes,mean_loss,epsilon\n')
     learning_file.flush()
 
