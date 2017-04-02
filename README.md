@@ -3,17 +3,19 @@ Deep Q-Learning
 
 This is a implementation of the paper [Human Level-Control Through Deep Reinforcement Learning](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html).
 
-To train a model run:
+- To train a model run:
 
 `python train.py [environement] [output_dir]`
 
 replace [environement] by one of the openai gym environement for example 'SpaceInvaders'
 
-To test a pretrained model run:
+- To test a pretrained model run:
 
 `python test.py [environement] [params_filename]`
 
-To visualize the training curves:
+you can save videos of the agent playing using the option -s [path_to_save_videos] or you can render live using the flag --render.
+
+- To visualize the training curves:
 
 `python plot_results.py [results_path]`
 
