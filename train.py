@@ -90,9 +90,9 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent = DeepQAgent(build_network, double_q_learning=True)
+    agent = DeepQAgent(build_network, double_q_learning=True, update_frequency=30000)
     env = gym.make(env_id+'Deterministic-v3')
-    env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size)
+    env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size, epsilon_min=0.01)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -108,16 +108,16 @@ if __name__ == '__main__':
     learning_file.write('epoch,num_episodes,mean_loss,epsilon\n')
     learning_file.flush()
 
-    results = env_wrapper.run_epoch(test_epoch_length, mode='baseline')
+    results = env_wrapper.run_epoch(test_epoch_length, mode='baseline', epsilon=1.)
     print "baseline: num episodes: %d, mean length: %d, max length: %d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(results)
 
-    env_wrapper.run_epoch(replay_start_size, mode='init')
+    env_wrapper.run_epoch(replay_start_size, mode='init', epsilon=1.)
     for epoch in range(n_epochs):
         num_episodes, mean_loss, epsilon = env_wrapper.run_epoch(train_epoch_length, mode='train')
         print "epoch: %d,\tnum episodes: %d,\tmean loss: %.4f,\tepsilon: %.2f"%(
                 epoch,num_episodes,mean_loss,epsilon)
 
-        results = env_wrapper.run_epoch(test_epoch_length, mode='test')
+        results = env_wrapper.run_epoch(test_epoch_length, mode='test', epsilon=0.001)
         print "epoch: %d, num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(
                 (epoch,)+results)
 
