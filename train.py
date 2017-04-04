@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     agent = DeepQAgent(build_network, double_q_learning=True, update_frequency=30000)
     env = gym.make(env_id+'Deterministic-v3')
-    env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size, epsilon_min=0.01)
+    env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size, epsilon_min=0.1)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
         print "epoch: %d,\tnum episodes: %d,\tmean loss: %.4f,\tepsilon: %.2f"%(
                 epoch,num_episodes,mean_loss,epsilon)
 
-        results = env_wrapper.run_epoch(test_epoch_length, mode='test', epsilon=0.001)
+        results = env_wrapper.run_epoch(test_epoch_length, mode='test', epsilon=0.05)
         print "epoch: %d, num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(
                 (epoch,)+results)
 
