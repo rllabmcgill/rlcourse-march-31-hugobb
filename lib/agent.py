@@ -60,7 +60,7 @@ class DeepQAgent(object):
         actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
                           action.reshape((-1, 1))).astype(theano.config.floatX)
 
-        next_action = T.max(next_q_vals, axis=1, keepdims=True)
+        next_action = T.argmax(next_q_vals, axis=1, keepdims=True).astype('int32')
         next_actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
                           next_action).astype(theano.config.floatX)
 
@@ -70,7 +70,7 @@ class DeepQAgent(object):
         else:
             target = (reward +
                       (T.ones_like(doneX) - doneX) *
-                      self.discount * T.max(next_q_vals, axis=1, keepdims=True))
+                      self.discount * T.max(double_q_vals, axis=1, keepdims=True))
         output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
         diff = target - output
 

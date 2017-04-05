@@ -90,7 +90,7 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent = DeepQAgent(build_network, double_q_learning=True, update_frequency=30000)
+    agent = DeepQAgent(build_network, double_q_learning=True, update_frequency=10000)
     env = gym.make(env_id+'Deterministic-v3')
     env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size, epsilon_min=0.1)
 
