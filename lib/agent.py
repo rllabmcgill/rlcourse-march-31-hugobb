@@ -8,7 +8,7 @@ from time import time
 class DeepQAgent(object):
     def __init__(self, build_network, update_frequency=10000, norm=255.,
                 discount=0.99, clip_delta=1.,
-                optimizer=DeepMindRmsprop(.00025, .95, .01)):
+                optimizer=DeepMindRmsprop(.00025, .95, .01), double_q_learning=False):
 
         self.update_frequency = update_frequency
         self.norm = norm
@@ -17,6 +17,7 @@ class DeepQAgent(object):
         self.build_network = build_network
         self.optimizer = optimizer
         self.update_counter = 0
+        self.double_q_learning = double_q_learning
 
     def init(self, num_actions, seq_length, state_space, batch_size):
         self.l_out = self.build_network(num_actions, shape=(None, seq_length)+state_space)
@@ -51,19 +52,25 @@ class DeepQAgent(object):
 
         q_vals = lasagne.layers.get_output(self.l_out, inputs=state/self.norm)
 
-        if self.update_frequency > 0:
-            next_q_vals = lasagne.layers.get_output(self.next_l_out, inputs=next_state/self.norm)
-        else:
-            next_q_vals = lasagne.layers.get_output(self.l_out, inputs=next_state/self.norm)
-            next_q_vals = theano.gradient.disconnected_grad(next_q_vals)
+        next_q_vals = lasagne.layers.get_output(self.l_out, inputs=next_state/self.norm)
+        next_q_vals = theano.gradient.disconnected_grad(next_q_vals)
+        double_q_vals = lasagne.layers.get_output(self.next_l_out, inputs=next_state/self.norm)
 
         doneX = done.astype(theano.config.floatX)
         actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
                           action.reshape((-1, 1))).astype(theano.config.floatX)
 
-        target = (reward +
-                  (T.ones_like(doneX) - doneX) *
-                  self.discount * T.max(next_q_vals, axis=1, keepdims=True))
+        next_action = T.argmax(next_q_vals, axis=1, keepdims=True).astype('int32')
+        next_actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
+                          next_action).astype(theano.config.floatX)
+
+        if self.double_q_learning:
+            target = (reward + (T.ones_like(doneX) - doneX) *
+                        self.discount * (double_q_vals * next_actionmask).sum(axis=1).reshape((-1,1)))
+        else:
+            target = (reward +
+                      (T.ones_like(doneX) - doneX) *
+                      self.discount * T.max(double_q_vals, axis=1, keepdims=True))
         output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
         diff = target - output
 

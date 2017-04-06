@@ -102,5 +102,5 @@ if __name__ == '__main__':
     env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=12)
     env_wrapper.agent.load(params)
 
-    results = env_wrapper.run_epoch(test_epoch_length, mode=mode)
+    results = env_wrapper.run_epoch(test_epoch_length, mode=mode, epsilon=0.05)
     print "num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %d, max_reward: %d"%(results)

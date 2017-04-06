@@ -28,7 +28,7 @@ class EnvWrapper(object):
         self.agent = agent
         agent.init(self.num_actions, self.seq_length, self.state_space, self.batch_size)
 
-    def run_episode(self, max_steps, mode='train'):
+    def run_episode(self, max_steps, eps, mode='train'):
         frame = self.env.reset()
         if self.max_no_op > 0:
             random_actions = np.random.randint(self.max_no_op+1)
@@ -55,14 +55,14 @@ class EnvWrapper(object):
                 self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.test_memory.get_state(observation, self.seq_length)
-                    action = self.agent.get_action(state, eps=0.05)
+                    action = self.agent.get_action(state, eps=eps)
                 else:
                     action = np.random.randint(self.num_actions)
             elif mode == 'init':
                 self.replay_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.replay_memory.get_state(observation, self.seq_length)
-                    action = self.agent.get_action(state, eps=self.epsilon)
+                    action = self.agent.get_action(state, eps=eps)
                 else:
                     action = np.random.randint(self.num_actions)
 
@@ -84,7 +84,7 @@ class EnvWrapper(object):
                 self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.test_memory.get_state(observation, self.seq_length)
-                    action = self.agent.get_action(state, eps=0.05)
+                    action = self.agent.get_action(state, eps=eps)
                 else:
                     action = np.random.randint(self.num_actions)
 
@@ -92,7 +92,7 @@ class EnvWrapper(object):
                 self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.test_memory.get_state(observation, self.seq_length)
-                    action = self.agent.get_action(state, eps=1.)
+                    action = self.agent.get_action(state, eps=eps)
                 else:
                     action = np.random.randint(self.num_actions)
             else:
@@ -103,7 +103,7 @@ class EnvWrapper(object):
 
         return episode_reward, num_steps, loss
 
-    def run_epoch(self, epoch_length, mode='train'):
+    def run_epoch(self, epoch_length, epsilon=None, mode='train'):
         num_episodes = 0
         steps_left = epoch_length
         pbar = tqdm(total=epoch_length)
@@ -111,7 +111,7 @@ class EnvWrapper(object):
         steps_per_episode = []
         loss_per_episode = []
         while steps_left > 0:
-            episode_reward, num_steps, loss = self.run_episode(steps_left, mode=mode)
+            episode_reward, num_steps, loss = self.run_episode(steps_left, eps=epsilon, mode=mode)
             loss_per_episode += loss
             num_episodes += 1
             reward_per_episode.append(episode_reward)
