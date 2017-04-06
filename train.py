@@ -79,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('env', help='The atari environement on which to train the model.', type=str)
     parser.add_argument('output', help='The path of the directory where to save results.', type=str)
     parser.add_argument('--mem_size', help='The size of the replay memory.', default=int(1e6), type=int)
+    parser.add_argument('--double_q_learning', help='If flag on, use double Q update.', action='store_true')
     args = parser.parse_args()
 
     env_id = args.env
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent = DeepQAgent(build_network, double_q_learning=True, update_frequency=10000)
+    agent = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000)
     env = gym.make(env_id+'Deterministic-v3')
     env_wrapper = EnvWrapper(env, agent, preprocess=preprocess, memory_size=memory_size, epsilon_min=0.1)
 
