@@ -27,8 +27,8 @@ class DeepQAgent(object):
             self.update_q_hat()
 
         self.num_actions = num_actions
-        state = T.tensor4('state')
-        next_state = T.tensor4('next_state')
+        state = T.tensor3('state')
+        next_state = T.tensor3('next_state')
         reward = T.col('reward')
         action = T.icol('action')
         done = T.icol('done')
