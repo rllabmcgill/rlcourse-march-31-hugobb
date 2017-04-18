@@ -11,20 +11,15 @@ def build_network(output_dim, shape):
 
     l_in = lasagne.layers.InputLayer(shape=shape)
 
-    l_hidden1 = lasagne.layers.DenseLayer(
+    l_hidden1 = lasagne.layers.LSTMLayer(
         l_in,
         num_units=64,
-        nonlinearity=lasagne.nonlinearities.rectify,
-        W=lasagne.init.HeUniform(),
-        b=lasagne.init.Constant(.1)
     )
 
     l_hidden2 = lasagne.layers.DenseLayer(
-        l_hidden1,
+        l_in,
         num_units=64,
-        nonlinearity=lasagne.nonlinearities.rectify,
-        W=lasagne.init.HeUniform(),
-        b=lasagne.init.Constant(.1)
+        nonlinearity=lasagne.nonlinearities.rectify
     )
 
     l_out = lasagne.layers.DenseLayer(
@@ -52,9 +47,9 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000)
+    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=1000, norm=4.0)
     env = GridWorld()
-    env_wrapper = EnvWrapper(env, agent, memory_size=memory_size, epsilon_min=0.1, max_no_op=0, state_space=(2,))
+    env_wrapper = EnvWrapper(env, agent, seq_length=4, memory_size=memory_size, epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0, state_space=(7,))
 
     if not os.path.exists(path):
         os.makedirs(path)

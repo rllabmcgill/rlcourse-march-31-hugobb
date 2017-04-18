@@ -1,5 +1,5 @@
 import gym
-from lib.env import EnvWrapper
+from lib.wrapper import EnvWrapper
 from lib.agent import DeepQAgent
 import numpy as np
 from scipy.misc import imresize
