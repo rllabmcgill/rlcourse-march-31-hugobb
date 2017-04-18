@@ -17,6 +17,8 @@ class Memory(object):
         self.memory_full = False
 
     def append(self, state, action, reward, done):
+        if action is None:
+            return
         self.action[self.top] = action
         self.state[self.top] = state
         self.reward[self.top] = reward

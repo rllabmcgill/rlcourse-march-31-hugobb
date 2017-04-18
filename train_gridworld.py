@@ -11,14 +11,15 @@ def build_network(output_dim, shape):
 
     l_in = lasagne.layers.InputLayer(shape=shape)
 
-    l_hidden1 = lasagne.layers.LSTMLayer(
+    l_hidden1 = lasagne.layers.DenseLayer(
         l_in,
-        num_units=64,
+        num_units=256,
+        nonlinearity=lasagne.nonlinearities.rectify
     )
 
     l_hidden2 = lasagne.layers.DenseLayer(
         l_in,
-        num_units=64,
+        num_units=256,
         nonlinearity=lasagne.nonlinearities.rectify
     )
 
@@ -47,9 +48,11 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=1000, norm=4.0)
-    env = GridWorld()
-    env_wrapper = EnvWrapper(env, agent, seq_length=4, memory_size=memory_size, epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0, state_space=(7,))
+    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
+    agent2 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
+
+    env = GridWorld(2, max_length=1000)
+    env_wrapper = EnvWrapper(env, [agent1, agent2], seq_length=1,  epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -69,8 +72,8 @@ if __name__ == '__main__':
     print "baseline: num episodes: %d, mean length: %d, max length: %d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(results)
     for epoch in range(n_epochs):
         num_episodes, mean_loss, epsilon = env_wrapper.run_epoch(train_epoch_length, mode='train')
-        print "epoch: %d,\tnum episodes: %d,\tmean loss: %.4f,\tepsilon: %.2f"%(
-                epoch,num_episodes,mean_loss,epsilon)
+        print "epoch: %d,\tnum episodes: %d,\tepsilon: %.2f"%(
+                epoch,num_episodes,epsilon)
 
         results = env_wrapper.run_epoch(test_epoch_length, mode='test', epsilon=0.05)
         print "epoch: %d, num episodes: %d, mean length: %d, max length: %.d, total reward: %d, mean_reward: %.4f, max_reward: %d"%(
@@ -80,8 +83,9 @@ if __name__ == '__main__':
         results_file.write(out)
         results_file.flush()
 
-        out = "{},{},{},{}\n".format(epoch, num_episodes, mean_loss, epsilon)
+        out = "{},{},{}\n".format(epoch, num_episodes, epsilon)
         learning_file.write(out)
         learning_file.flush()
 
-        env_wrapper.agent.save(os.path.join(path,'params/epoch_%d'%(epoch)))
+        for a in env_wrapper.agents:
+            a.save(os.path.join(path,'params/epoch_%d'%(epoch)))

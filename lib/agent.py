@@ -4,10 +4,11 @@ import theano
 from updates import DeepMindRmsprop
 import numpy as np
 from time import time
+from memory import Memory
 
 class DeepQAgent(object):
     def __init__(self, build_network, update_frequency=10000, norm=255.,
-                discount=0.99, clip_delta=1.,
+                discount=0.99, clip_delta=1., state_space=(84,84), memory_size=int(1e5),
                 optimizer=DeepMindRmsprop(.00025, .95, .01), double_q_learning=False):
 
         self.update_frequency = update_frequency
@@ -18,12 +19,15 @@ class DeepQAgent(object):
         self.optimizer = optimizer
         self.update_counter = 0
         self.double_q_learning = double_q_learning
+        self.state_space = state_space
+        self.replay_memory = Memory(state_space, memory_size)
 
-    def init(self, num_actions, seq_length, state_space, batch_size):
-        self.l_out = self.build_network(num_actions, shape=(None, seq_length)+state_space)
+    def init(self, num_actions, seq_length, batch_size):
+        self.test_memory = self.test_memory = Memory(self.state_space, seq_length * 2)
+        self.l_out = self.build_network(num_actions, shape=(None, seq_length)+self.state_space)
 
         if self.update_frequency > 0:
-            self.next_l_out = self.build_network(num_actions, shape=(None, seq_length)+state_space)
+            self.next_l_out = self.build_network(num_actions, shape=(None, seq_length)+self.state_space)
             self.update_q_hat()
 
         self.num_actions = num_actions
@@ -34,7 +38,7 @@ class DeepQAgent(object):
         done = T.icol('done')
 
         self.seq_shared = theano.shared(
-            np.zeros((batch_size, seq_length) + state_space,
+            np.zeros((batch_size, seq_length) + self.state_space,
                      dtype=theano.config.floatX))
         self.reward_shared = theano.shared(
             np.zeros((batch_size, 1), dtype=theano.config.floatX),
@@ -47,7 +51,7 @@ class DeepQAgent(object):
             broadcastable=(False, True))
 
         self.state_shared = theano.shared(
-            np.zeros((seq_length,)+state_space,
+            np.zeros((seq_length,)+self.state_space,
                      dtype=theano.config.floatX))
 
         q_vals = lasagne.layers.get_output(self.l_out, inputs=state/self.norm)
@@ -98,7 +102,7 @@ class DeepQAgent(object):
         self._train = theano.function([], [loss], updates=updates, givens=train_givens)
 
         q_givens = {
-            state: self.state_shared.reshape((1, seq_length)+state_space)
+            state: self.state_shared.reshape((1, seq_length)+self.state_space)
         }
         self._q_vals = theano.function([], q_vals[0], givens=q_givens)
         print '%.2f to compile.'%(time()-t)
