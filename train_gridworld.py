@@ -5,33 +5,40 @@ import numpy as np
 import os
 import argparse
 
-def build_network(output_dim, shape):
+def build_network(hidden, output_dim, shape, n_hidden=256):
     import lasagne
     from lasagne.layers import Conv2DLayer
 
-    l_in = lasagne.layers.InputLayer(shape=shape)
+    network = {}
+    network['l_in'] = lasagne.layers.InputLayer(shape=shape)
+    network['l_mask'] = lasagne.layers.InputLayer(shape=shape)
 
-    l_hidden1 = lasagne.layers.DenseLayer(
-        l_in,
+    '''
+    network['l_hidden1'] = lasagne.layers.DenseLayer(
+        network['l_in'],
         num_units=256,
         nonlinearity=lasagne.nonlinearities.rectify
     )
+    '''
 
-    l_hidden2 = lasagne.layers.DenseLayer(
-        l_in,
-        num_units=256,
-        nonlinearity=lasagne.nonlinearities.rectify
+    network['l_hidden2'] = lasagne.layers.LSTMLayer(
+        network['l_in'],
+        num_units=n_hidden,
+        #nonlinearity=lasagne.nonlinearities.rectify
+        only_return_final=True,
+        hid_init=hidden,
+        mask_input=network['l_mask']
     )
 
-    l_out = lasagne.layers.DenseLayer(
-        l_hidden2,
+    network['l_out'] = lasagne.layers.DenseLayer(
+        network['l_hidden2'],
         num_units=output_dim,
         nonlinearity=None,
         W=lasagne.init.HeUniform(),
         b=lasagne.init.Constant(.1)
     )
 
-    return l_out
+    return network
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -48,11 +55,13 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
-    agent2 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
+    agent1 = DeepQAgent(build_network, n_hidden=256, double_q_learning=args.double_q_learning,
+                        update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(6,),
+                        seq_length=10)
+    #agent2 = DeepQAgent(build_network, n_hidden=256, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
 
-    env = GridWorld(2, max_length=1000)
-    env_wrapper = EnvWrapper(env, [agent1, agent2], seq_length=1,  epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
+    env = GridWorld(1, max_length=1000)
+    env_wrapper = EnvWrapper(env, [agent1], epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
 
     if not os.path.exists(path):
         os.makedirs(path)

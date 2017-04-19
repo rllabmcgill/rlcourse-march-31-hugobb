@@ -18,7 +18,7 @@ class GridWorld(object):
         for i in range(self.n_agents):
             o = (np.random.randint(self.grid_size[0]), np.random.randint(self.grid_size[1]))
             self.observation.append(o)
-            observation.append(o + sum(self.landmarks, ()) + (self.goal[i],))
+            observation.append(o + sum(self.landmarks, ()))
 
         return observation
 
@@ -54,7 +54,7 @@ class GridWorld(object):
 
             o = (x,y)
             self.observation[i] = o
-            observation.append(o + sum(self.landmarks, ()) + (self.goal[i],))
+            observation.append(o + sum(self.landmarks, ()))
             if (x - self.landmarks[self.goal[i]][0])**2 + (y - self.landmarks[self.goal[i]][1])**2 == 0:
                 done[i] = True
                 reward += 1
