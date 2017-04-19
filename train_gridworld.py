@@ -19,7 +19,7 @@ def build_network(output_dim, shape):
 
     l_hidden2 = lasagne.layers.DenseLayer(
         l_in,
-        num_units=256,
+        num_units=128,
         nonlinearity=lasagne.nonlinearities.rectify
     )
 
@@ -48,10 +48,10 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
-    agent2 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
+    agent1 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(10,))
+    agent2 = DeepQAgent(build_network, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(10,))
 
-    env = GridWorld(2, max_length=1000)
+    env = GridWorld(2, max_length=100)
     env_wrapper = EnvWrapper(env, [agent1, agent2], seq_length=1,  epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
 
     if not os.path.exists(path):

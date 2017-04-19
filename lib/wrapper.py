@@ -44,11 +44,11 @@ class EnvWrapper(object):
         while True:
             frame, reward, done, info = self.env.step(action)
             num_steps += 1
-            episode_reward += reward
+            episode_reward += np.sum(reward)
             if mode == 'init' or mode == 'train':
                 for i, agent in enumerate(self.agents):
                     if done[i]:
-                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward,-1,1), True)
+                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward[i],-1,1), True)
                         done_all_agent[i] = True
                         action[i] = None
             elif mode == 'test':
@@ -56,14 +56,14 @@ class EnvWrapper(object):
                     if done[i]:
                         done_all_agent[i] = True
                         action[i] = None
-            if any(done_all_agent) or num_steps >= max_steps:
+            if all(done_all_agent) or num_steps >= max_steps:
                 break
 
             observation = self.preprocess(frame)
             if mode == 'test':
                 for i, agent in enumerate(self.agents):
                     if not done_all_agent[i]:
-                        agent.test_memory.append(last_frame[i], last_action[i], np.clip(reward,-1,1), False)
+                        agent.test_memory.append(last_frame[i], last_action[i], np.clip(reward[i],-1,1), False)
                         if num_steps >= self.seq_length:
                             state = agent.test_memory.get_state(observation[i], self.seq_length)
                             action[i] = agent.get_action(state, eps=eps)
@@ -72,7 +72,7 @@ class EnvWrapper(object):
             elif mode == 'init':
                 for i, agent in enumerate(self.agents):
                     if not done_all_agent[i]:
-                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward,-1,1), False)
+                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward[i],-1,1), False)
                         if num_steps >= self.seq_length:
                             state = agent.replay_memory.get_state(observation[i], self.seq_length)
                             action[i] = agent.get_action(state, eps=eps)
@@ -83,7 +83,7 @@ class EnvWrapper(object):
                 self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_rate)
                 for i, agent in enumerate(self.agents):
                     if not done_all_agent[i]:
-                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward,-1,1), False)
+                        agent.replay_memory.append(last_frame[i], last_action[i], np.clip(reward[i],-1,1), False)
                         if num_steps >= self.seq_length:
                             state = agent.replay_memory.get_state(observation[i], self.seq_length)
                             action[i] = agent.get_action(state, eps=self.epsilon)
@@ -96,7 +96,7 @@ class EnvWrapper(object):
 
             elif mode == 'render':
                 self.env.render()
-                self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                self.test_memory.append(last_frame, last_action, np.clip(reward[i],-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.test_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=eps)
@@ -104,7 +104,7 @@ class EnvWrapper(object):
                     action = np.random.randint(self.num_actions)
 
             elif mode == 'baseline':
-                self.test_memory.append(last_frame, last_action, np.clip(reward,-1,1), False)
+                self.test_memory.append(last_frame, last_action, np.clip(reward[i],-1,1), False)
                 if num_steps >= self.seq_length:
                     state = self.test_memory.get_state(observation, self.seq_length)
                     action = self.agent.get_action(state, eps=eps)

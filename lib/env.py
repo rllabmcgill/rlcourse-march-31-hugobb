@@ -18,19 +18,19 @@ class GridWorld(object):
         for i in range(self.n_agents):
             o = (np.random.randint(self.grid_size[0]), np.random.randint(self.grid_size[1]))
             self.observation.append(o)
-            observation.append(o + sum(self.landmarks, ()) + (self.goal[i],))
+        for i in range(self.n_agents):
+            observation.append(sum(self.observation, ()) + sum(self.landmarks, ()) + tuple(self.goal))
 
         return observation
 
     def step(self, action):
-        reward = 0
+        reward = [0]*self.n_agents
         info = [None]*self.n_agents
         done = [False]*self.n_agents
         observation = []
         for i, a in enumerate(action):
             x, y = self.observation[i]
             if a is None:
-                observation.append(self.observation[i] + sum(self.landmarks, ()) + (self.goal[i],))
                 continue
 
             a = self.action_space[a]
@@ -54,12 +54,15 @@ class GridWorld(object):
 
             o = (x,y)
             self.observation[i] = o
-            observation.append(o + sum(self.landmarks, ()) + (self.goal[i],))
             if (x - self.landmarks[self.goal[i]][0])**2 + (y - self.landmarks[self.goal[i]][1])**2 == 0:
                 done[i] = True
-                reward += 1
+                reward[i] += 1
             elif self.steps > self.max_length:
                 done = [True]*self.n_agents
-
+        for i in range(self.n_agents):
+            if action[i] is None:
+                observation.append(None)
+            else:
+                observation.append(sum(self.observation, ()) + sum(self.landmarks, ()) + tuple(self.goal))
         self.steps += 1
         return observation, reward, done, info
