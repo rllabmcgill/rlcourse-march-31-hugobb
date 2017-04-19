@@ -20,7 +20,6 @@ class GridWorld(object):
             self.observation.append(o)
         for i in range(self.n_agents):
             observation.append(sum(self.observation, ()) + sum(self.landmarks, ()) + tuple(self.goal))
-
         return observation
 
     def step(self, action):
