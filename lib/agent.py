@@ -30,12 +30,12 @@ class DeepQAgent(object):
         self.num_actions = num_actions
         state = T.tensor3('state')
         next_state = T.tensor3('next_state')
-        reward = T.col('reward')
-        action = T.icol('action')
-        done = T.icol('done')
+        reward = T.matrix('reward')
+        action = T.imatrix('action')
+        done = T.imatrix('done')
         hidden = T.matrix('hidden')
-        mask = T.matrix('mask')
-        next_mask = T.matrix('next_mask')
+        mask = T.imatrix('mask')
+        next_mask = T.imatrix('next_mask')
 
         self.network = self.build_network(hidden, num_actions, shape=(None, None)+self.state_space, n_hidden=self.n_hidden)
 
@@ -48,15 +48,15 @@ class DeepQAgent(object):
             np.zeros((self.batch_size, self.seq_length) + self.state_space,
                      dtype=theano.config.floatX))
         self.reward_shared = theano.shared(
-            np.zeros((self.batch_size, 1), dtype=theano.config.floatX),
-            broadcastable=(False, True))
+            np.zeros((self.batch_size, self.seq_length), dtype=theano.config.floatX),
+            broadcastable=(False, False))
         self.action_shared = theano.shared(
-            np.zeros((self.batch_size, 1), dtype='int32'),
-            broadcastable=(False, True))
+            np.zeros((self.batch_size, self.seq_length), dtype='int32'),
+            broadcastable=(False, False))
         self.done_shared = theano.shared(
-            np.zeros((self.batch_size, 1), dtype='int32'),
-            broadcastable=(False, True))
-        self.mask_shared = theano.shared(np.zeros((self.batch_size, self.seq_length+1), dtype=theano.config.floatX))
+            np.zeros((self.batch_size, self.seq_length), dtype='int32'),
+            broadcastable=(False, False))
+        self.mask_shared = theano.shared(np.zeros((self.batch_size, self.seq_length+1), dtype='int32'))
 
         self.state_shared = theano.shared(
             np.zeros(self.state_space,
@@ -74,8 +74,8 @@ class DeepQAgent(object):
                             inputs={self.target_network['l_in']: next_state/self.norm, self.target_network['l_mask']: next_mask})
 
         doneX = done.astype(theano.config.floatX)
-        actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
-                          action.reshape((-1, 1))).astype(theano.config.floatX)
+        actionmask = T.eq(T.arange(num_actions).dimshuffle(('x','x',0)),
+                          action.reshape((self.batch_size, self.seq_length, 1))).astype(theano.config.floatX)
 
         next_action = T.argmax(next_q_vals, axis=1, keepdims=True).astype('int32')
         next_actionmask = T.eq(T.arange(num_actions).reshape((1, -1)),
@@ -87,9 +87,9 @@ class DeepQAgent(object):
         else:
             target = (reward +
                       (T.ones_like(doneX) - doneX) *
-                      self.discount * T.max(double_q_vals, axis=1, keepdims=True))
-        output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
-        diff = target - output
+                      self.discount * T.max(double_q_vals, axis=2))
+        output = (q_vals * actionmask).sum(axis=2)
+        diff = T.sum((target - output)*mask, axis=1)
 
         if self.clip_delta > 0:
             quadratic_part = T.minimum(abs(diff), self.clip_delta)
@@ -120,9 +120,9 @@ class DeepQAgent(object):
         q_givens = {
             state: self.state_shared.reshape((1, 1)+self.state_space),
             hidden: self.hidden_shared.reshape((1,+self.n_hidden)),
-            mask: np.ones((1,1), dtype=theano.config.floatX)
+            mask: np.ones((1,1), dtype='int32')
         }
-        self._q_vals = theano.function([], [q_vals[0], next_hidden[0]], givens=q_givens)
+        self._q_vals = theano.function([], [q_vals[0], next_hidden], givens=q_givens)
         print '%.2f to compile.'%(time()-t)
 
     def update_q_hat(self):
@@ -155,7 +155,7 @@ class DeepQAgent(object):
 
     def q_vals(self, state, hidden):
         self.state_shared.set_value(state)
-        self.hidden_shared.set_value(hidden)
+        self.hidden_shared.set_value(hidden.squeeze())
         return self._q_vals()
 
     def get_action(self, state, eps=0.1):

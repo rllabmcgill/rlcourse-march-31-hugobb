@@ -25,7 +25,7 @@ def build_network(hidden, output_dim, shape, n_hidden=256):
         network['l_in'],
         num_units=n_hidden,
         #nonlinearity=lasagne.nonlinearities.rectify
-        only_return_final=True,
+        #only_return_final=True,
         hid_init=hidden,
         mask_input=network['l_mask'],
         grad_clipping=10.
@@ -36,7 +36,8 @@ def build_network(hidden, output_dim, shape, n_hidden=256):
         num_units=output_dim,
         nonlinearity=None,
         W=lasagne.init.HeUniform(),
-        b=lasagne.init.Constant(.1)
+        b=lasagne.init.Constant(.1),
+        num_leading_axes=2
     )
 
     return network
@@ -52,17 +53,17 @@ if __name__ == '__main__':
     memory_size = args.mem_size
 
     replay_start_size = 50000
-    train_epoch_length = 250000
-    test_epoch_length = 125000
+    train_epoch_length = 100000
+    test_epoch_length = 50000
     n_epochs = 200
 
-    agent1 = DeepQAgent(build_network, n_hidden=128, double_q_learning=args.double_q_learning,
-                        update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,),
-                        seq_length=1)
+    agent1 = DeepQAgent(build_network, n_hidden=16, double_q_learning=args.double_q_learning,
+                        update_frequency=20000, norm=4.0, memory_size=memory_size, state_space=(7,),
+                        seq_length=4)
     #agent2 = DeepQAgent(build_network, n_hidden=256, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
 
     env = GridWorld(1, max_length=50)
-    env_wrapper = EnvWrapper(env, [agent1], epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
+    env_wrapper = EnvWrapper(env, [agent1], update_frequency=1, epsilon_decay=int(1e6), epsilon_min=0.1, max_no_op=0)
 
     if not os.path.exists(path):
         os.makedirs(path)
