@@ -1,26 +1,27 @@
 import lasagne
 import theano.tensor as T
 import theano
-from updates import DeepMindRmsprop
+from updates import DeepMindRmsprop, Adam, SGD
 import numpy as np
 from time import time
 from memory import Memory
 
 class DeepQAgent(object):
-    def __init__(self, build_network, update_frequency=10000, norm=255.,
-                discount=0.99, clip_delta=1., state_space=(84,84), memory_size=int(1e5),
-                optimizer=DeepMindRmsprop(.00025, .95, .01), double_q_learning=False):
+    def __init__(self, build_network, update_frequency=1, norm=255.,
+                discount=0.99, clip_delta=0., state_space=(84,84), memory_size=int(1e5),
+                optimizer=Adam, learning_rate=0.001, double_q_learning=False):
 
         self.update_frequency = update_frequency
         self.norm = norm
         self.discount = discount
         self.clip_delta = clip_delta
         self.build_network = build_network
-        self.optimizer = optimizer
         self.update_counter = 0
         self.double_q_learning = double_q_learning
         self.state_space = state_space
         self.replay_memory = Memory(state_space, memory_size)
+        self.lr = theano.shared(np.array(learning_rate, dtype=theano.config.floatX))
+        self.optimizer = optimizer(learning_rate=self.lr)
 
     def init(self, num_actions, seq_length, batch_size):
         self.test_memory = self.test_memory = Memory(self.state_space, seq_length * 2)

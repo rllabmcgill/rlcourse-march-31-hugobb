@@ -3,8 +3,8 @@ from tqdm import tqdm
 
 class EnvWrapper(object):
     def __init__(self, env, agents, seq_length=4, max_no_op=30,
-                preprocess=lambda x: x, init_epsilon=1,
-                epsilon_decay=int(1e6), epsilon_min=0.1, update_frequency=4, batch_size=32):
+                preprocess=lambda x: x, init_epsilon=1.,
+                epsilon_decay=int(1e6), epsilon_min=0.8, update_frequency=4, batch_size=32):
         self.env = env
         self.num_actions = len(self.env.action_space)
         self.seq_length = seq_length
@@ -45,6 +45,7 @@ class EnvWrapper(object):
             frame, reward, done, info = self.env.step(action)
             num_steps += 1
             episode_reward += np.sum(reward)
+            reward = [np.sum(reward)]*len(self.agents)
             if mode == 'init' or mode == 'train':
                 for i, agent in enumerate(self.agents):
                     if done[i]:
