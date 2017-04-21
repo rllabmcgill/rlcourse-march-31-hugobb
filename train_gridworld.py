@@ -28,15 +28,15 @@ def build_network(hidden, output_dim, shape, n_hidden=256):
         only_return_final=True,
         hid_init=hidden,
         mask_input=network['l_mask'],
-        grad_clipping=10.
+        grad_clipping=10.,
+        forgetgate=lasagne.layers.Gate(b=lasagne.init.Constant(1.))
     )
 
     network['l_out'] = lasagne.layers.DenseLayer(
         network['l_hidden2'],
         num_units=output_dim,
         nonlinearity=None,
-        W=lasagne.init.HeUniform(),
-        b=lasagne.init.Constant(.1)
+        W=lasagne.init.HeUniform()
     )
 
     return network
@@ -56,9 +56,9 @@ if __name__ == '__main__':
     test_epoch_length = 125000
     n_epochs = 200
 
-    agent1 = DeepQAgent(build_network, n_hidden=128, double_q_learning=args.double_q_learning,
+    agent1 = DeepQAgent(build_network, n_hidden=64, double_q_learning=args.double_q_learning,
                         update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,),
-                        seq_length=1)
+                        seq_length=10)
     #agent2 = DeepQAgent(build_network, n_hidden=256, double_q_learning=args.double_q_learning, update_frequency=10000, norm=4.0, memory_size=memory_size, state_space=(7,))
 
     env = GridWorld(1, max_length=50)

@@ -43,7 +43,7 @@ class Memory(object):
             all_indices = np.arange(index, index + seq_length + 1)
             end_index = index + seq_length - 1
             if np.any(self.done.take(all_indices[0:-1], mode='wrap')):
-                end_index = all_indices[self.done.take(all_indices[0:-1], mode='wrap')][0]
+                end_index = all_indices[self.done.take(all_indices, mode='wrap')][0]
                 mask[count, end_index+1:] = False
 
             state[count] = self.state.take(all_indices, axis=0, mode='wrap')
